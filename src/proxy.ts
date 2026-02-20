@@ -1,7 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const token = await getToken({
@@ -11,12 +11,12 @@ export async function middleware(req: NextRequest) {
 
   const publicRoutes = ["/login", "/register"];
 
-  // ✅ If user logged in and tries to access login/register → redirect to home
+  // ✅ Logged-in user tries to open login/register
   if (token && publicRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // ✅ If user not logged in and tries private route → redirect to login
+  // ✅ Not logged-in user tries private route
   if (!token && !publicRoutes.includes(pathname)) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", req.url);
@@ -27,5 +27,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
 };
